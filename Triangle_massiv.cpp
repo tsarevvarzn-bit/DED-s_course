@@ -7,9 +7,15 @@ struct one_result{
     unsigned char score_2;
 };
 
-void askForNumberOfCommands(unsigned int* number_of_teams_p);
-void askForValues(one_result* results_p, unsigned int number_of_teams);
-void printResults(one_result* results_p, unsigned int number_of_teams);
+struct result_table{
+    one_result*   results_p;
+    unsigned int  number_of_teams;
+};
+
+void        askForNumberOfCommands(unsigned int* number_of_teams_p);
+void        askForValues(result_table result_table);
+void        printResults(result_table result_table);
+one_result* getResult(result_table result_table, unsigned int first_team, unsigned int second_team);
 
 int main(){
 
@@ -17,12 +23,14 @@ int main(){
 
     askForNumberOfCommands(&number_of_teams);
 
-    one_result* results_p =  (one_result*) calloc(((number_of_teams - 1) * number_of_teams) / 2, sizeof(one_result));// Ровно под количество матчей
+    result_table result_table = {};
 
-    askForValues(results_p, number_of_teams);
+    result_table.results_p = (one_result*) calloc(((number_of_teams - 1) * number_of_teams) / 2, sizeof(one_result));// Ровно под количество матчей
+    result_table.number_of_teams = number_of_teams;
 
-    printResults(results_p, number_of_teams);
+    askForValues(result_table);
 
+    printResults(result_table);
 }
 
 void askForNumberOfCommands(unsigned int* number_of_teams_p){
@@ -33,55 +41,68 @@ void askForNumberOfCommands(unsigned int* number_of_teams_p){
     scanf("%d", number_of_teams_p);
 }
 
-void askForValues(one_result* results_p, unsigned int number_of_teams){
+void askForValues(result_table result_table){
 
-    assert(results_p);
-    assert(number_of_teams > 1);
+    assert(result_table.results_p);
+    assert(result_table.number_of_teams > 1);
 
-    for(unsigned int first_team = 2; first_team <= number_of_teams; first_team++){//first_team и second_team - номера команд, начинающихся с 1
+    for(unsigned int first_team = 2; first_team <= result_table.number_of_teams; first_team++){//first_team и second_team - номера команд, начинающихся с 1
 
         for(unsigned int second_team = 1; second_team < first_team; second_team++){
 
             printf("\nEnter the math results for the match of  %u team and %u team, the score of %u team: ", first_team, second_team, first_team);
 
-            scanf("%hhu", &((results_p + (((first_team - 1) * (first_team - 2)) / 2) + (second_team - 1))->score_1));
+            scanf("%hhu", &(getResult(result_table, first_team, second_team)->score_1));
 
             printf("\nThe score of %u team: ", second_team);
 
-            scanf("%hhu", &((results_p + (((first_team - 1) * (first_team - 2)) / 2) + (second_team - 1))->score_2));
+            scanf("%hhu", &(getResult(result_table, first_team, second_team)->score_2));
         }
     }
-
 }
 
-void printResults(one_result* results_p, unsigned int number_of_teams){
+void printResults(result_table result_table){
 
-    assert(results_p);
-    assert(number_of_teams > 1);
+    assert(result_table.results_p);
+    assert(result_table.number_of_teams > 1);
 
     unsigned char score_1 = 0;
     unsigned char score_2 = 0;
 
     printf("\nFirst/Second ");
 
-    for(unsigned int team = 1; team < number_of_teams; team++){
+    for(unsigned int team = 1; team < result_table.number_of_teams; team++){
         printf("%d      ", team);
     }
     printf("\n");
 
-    for(unsigned int first_team = 2; first_team <= number_of_teams; first_team++){//first_team и second_team - номера команд, начинающихся с 1
+    for(unsigned int first_team = 2; first_team <= result_table.number_of_teams; first_team++){//first_team и second_team - номера команд, начинающихся с 1
 
         printf("%d            ", first_team);
         for(unsigned int second_team = 1; second_team < first_team; second_team++){
 
-            score_1 = ((results_p + (((first_team - 1) * (first_team - 2)) / 2) + (second_team - 1))->score_1);
-            score_2 = ((results_p + (((first_team - 1) * (first_team - 2)) / 2) + (second_team - 1))->score_2);
+            score_1 = (getResult(result_table, first_team, second_team)->score_1);
+            score_2 = (getResult(result_table, first_team, second_team)->score_2);
 
-            printf("%u %u   ", score_1, score_2);
+            printf("%u %u    ", score_1, score_2);
         }
         printf("\n");
     }
 }
 
-//changes
-//new changes
+one_result* getResult(result_table result_table, unsigned int first_team, unsigned int second_team){
+
+    assert(result_table.results_p);
+
+    unsigned int idx_of_match_in_array = (((first_team - 1) * (first_team - 2)) / 2) + (second_team - 1);
+
+    if(idx_of_match_in_array >= ((result_table.number_of_teams - 1) * result_table.number_of_teams) / 2){
+        printf("ERROR: array index is incorrect \n"
+               "unsigned int idx_of_match_in_array =  %hhu \n"
+               "unsigned int first_team = %hhu \n"
+               "unsigned int second_team = %hhu", idx_of_match_in_array, first_team, second_team);
+        abort();
+    }
+
+    return (result_table.results_p + idx_of_match_in_array);
+}
