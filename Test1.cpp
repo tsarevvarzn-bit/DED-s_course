@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
+
+const int WORD_LEN = 100;
 
 int    myStrcmp(const char *str1, const char *str2);
 size_t myStrlen(const char* str);
@@ -12,6 +15,8 @@ int    myPuts(const char* str);
 char*  myStrchr(char* str, int ch);
 char*  myStrrchr(char* str, int ch);
 
+FILE*  myGetline(FILE* input, char* str, int delimiter, int max_len);
+char*  myStrstr(char* str, char* substr);
 
 
 
@@ -69,20 +74,44 @@ int main(){
     printf("9.myStrrchr\n");
     printf("last 'R' in s3: ");
     char* s6 = myStrchr(s3, 'R');
-    if(s5 == NULL){
+    if(s6 == NULL){
         printf("There is no 'R' in s3\n");
     }else{
         puts(s6);
     }
 
+    char s7[WORD_LEN + 1] = {};
+    printf("10.myGetline\n");
+    printf("Print something: ");
+    myGetline(stdin, s7, '\n', WORD_LEN);
+    printf("\nYour text in s6: <%s>\n", s7);
 
-    printf("s1, s2, s3:\n");
+    char s8[WORD_LEN + 1] = {};
+    char s9[WORD_LEN + 1] = {};
+    printf("11.myStrstr\n");
+    printf("Print general str: ");
+    myGetline(stdin, s8, '\n', WORD_LEN);
+    printf("\nPrint substr: ");
+    myGetline(stdin, s9, '\n', WORD_LEN);
+    char* s10 = myStrstr(s8, s9);
+    if(s10 == NULL){
+        printf("\nThere is no <%s> in <%s>\n", s9, s8);
+    }else{
+        printf("\nThere is <%s> in <%s> in %llu place\n", s9, s8, s10 - s8);
+    }
+
+    printf("s1, s2, s3, s4, s5, s7:\n");
     printf("%s\n", s1);
     printf("%s\n", s2);
-    printf("%s\n\n", s3);
+    printf("%s\n", s3);
+    printf("%s\n", s4);
+    printf("%s\n", s5);
+    printf("%s\n\n", s7);
 }
 
 size_t myStrlen(const char* str){
+
+    assert(str);
 
     if(str == NULL)
         return 0;
@@ -97,6 +126,8 @@ size_t myStrlen(const char* str){
 }
 
 size_t myStrnlen(const char* str, size_t strsz){
+
+    assert(str);
 
     if(str == NULL)
         return 0;
@@ -115,6 +146,8 @@ size_t myStrnlen(const char* str, size_t strsz){
 
 int myPuts(const char* str){
 
+    assert(str);
+
     for(int i = 0; str[i] != '\0'; i++){
         if(putchar(str[i]) == EOF)
             return EOF;
@@ -127,6 +160,9 @@ int myPuts(const char* str){
 }
 
 char* myStrcpy(char* dest, const char* src){
+
+    assert(dest);
+    assert(src);
 
     int i = 0;
 
@@ -141,6 +177,9 @@ char* myStrcpy(char* dest, const char* src){
 }
 
 char* myStrcat(char* dest, const char* src){
+
+    assert(dest);
+    assert(src);
 
     int i = 0;
     int j = 0;
@@ -169,7 +208,7 @@ char* myStrdup(const char* str1){
 
     while(str1[len] != '\0'){
         len++;
-    }
+    } //strlen
 
     char* str1_copy = (char*) calloc(len + 1, sizeof(char));
 
@@ -191,6 +230,9 @@ char* myStrdup(const char* str1){
 
 int myStrcmp(const char *str1, const char *str2){
 
+    assert(str1);
+    assert(str2);
+
     for(int i = 0; 1; i++){
 
         if(str1[i] < str2[i]){
@@ -208,6 +250,9 @@ int myStrcmp(const char *str1, const char *str2){
 
 char*  myStrchr(char* str, int ch){
 
+    assert(str);
+    assert(ch != EOF);
+
     char ch_ch = (char) ch;
 
     int i = 0;
@@ -224,6 +269,8 @@ char*  myStrchr(char* str, int ch){
 }
 
 char*  myStrrchr(char* str, int ch){
+
+    assert(str);
 
     char ch_ch = (char) ch;
 
@@ -244,4 +291,54 @@ char*  myStrrchr(char* str, int ch){
     }else{
         return str + idx_of_ch;
     }
+}
+
+FILE*  myGetline(FILE* input, char* str, int delimiter, int max_len){ //Безопасная версия
+
+    assert(input);
+    assert(str);
+    assert(delimiter >= -1 && delimiter <= 255);
+
+    int c = -2; //magic numbers
+    int char_number = 0;
+
+    while((c = getc(input)) != EOF && (c != delimiter) && max_len > char_number){
+
+        *(str + char_number) = (char) c;
+        char_number++;
+    }
+
+    *(str + char_number) = '\0';
+
+    return input;
+}
+
+char*  myStrstr(char* str, char* substr){
+
+    assert(str);
+    assert(substr);
+
+    int i = 0; //Индекс начала рассматриваемой строки
+    int j = 0; //Индекс рассматриваемого символа в подстроке
+
+    if(substr[0] == '\0'){
+        return str;
+    }
+
+    while(str[i + j] != '\0'){ //Пока рассматриваемый символ не конец строки
+
+        while(str[i + j] == substr[j]){ //Пока подстрока str[i] совпадает с substr
+
+            if(substr[j + 1] == '\0'){ //Если все совпадало, а substr кончилась
+                return str + i;
+            }
+
+            j++; //Следующий символ в подстроке
+        }
+
+        i++; //Следующий символ в строке, с которого мы начнем проверять подстроку
+        j = 0;
+    }
+
+    return NULL;
 }
