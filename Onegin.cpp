@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define DEFAULT "\033[0m"
 #define BOLD    "\033[1m"
@@ -13,7 +15,6 @@
 #define VIOLET  "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-const unsigned int BUFFER_SIZE = 10000;
 const unsigned int MIN_INDEX_SIZE = 10000;
 const unsigned int MAX_STR_LEN = 10000;
 
@@ -22,37 +23,40 @@ void*  safeRealloc(void* old_pointer, const size_t new_size);
 FILE*  safeOpen(const char* file_name, const char* mode);
 
 int    myGetline(FILE* input, char* str, const int delimiter, const int max_str_size);
-void   swap(char** a, char** b);
+void   swap(char* const a, char* const b, const int size_of_elem);
+
+void   myQSort(char* const        array,
+               const unsigned int number_of_elements,
+               const unsigned int size_of_elem,
+               int (*             compare)(const void* a, const void* b));
 
 char** getStringsFromFile(const char* file_name, unsigned int* num_of_lines_read_p);
 void   printArray(FILE* out, char** index, unsigned int num_of_lines);
 char** indexCopy(char** old_index, unsigned int num_of_lines);
 
-int    compareAlphabetLeft(const void * a, const void * b);
-int    compareAlphabetRight(const void * a, const void * b);
+int    compareAlphabetLeft(const void* a, const void* b);
+int    compareAlphabetRight(const void* a, const void* b);
 
 int main(){
 
     unsigned int number_of_lines = 0;
 
-    char** index_orig = getStringsFromFile("Onegin_text.txt", &number_of_lines);
+    char** index_orig = getStringsFromFile("Onegin_text.txt", &number_of_lines);// TODO union K&R
+
     FILE* out = safeOpen("Onegin_sorted.txt", "w");
 
-    char** index_sorted_left = indexCopy(index_orig, number_of_lines);
-    printf("Copied1\n");
+    char** index_sorted_left = indexCopy(index_orig, number_of_lines); //TODO dont copy
     qsort((void*) index_sorted_left, (size_t) number_of_lines, sizeof(char*), compareAlphabetLeft);
-    printf("Sorted1\n");
     printArray(out, index_sorted_left, number_of_lines);
 
     char** index_sorted_right = indexCopy(index_orig, number_of_lines);
-    printf("Copied2\n");
-    qsort((void*) index_sorted_right, (size_t) number_of_lines, sizeof(char*), compareAlphabetRight);
-    printf("Sorted2\n");
+    myQSort((char*) index_sorted_right, number_of_lines, sizeof(char*), compareAlphabetRight);
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
     printArray(out, index_sorted_right, number_of_lines);
 
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
     printArray(out, index_orig, number_of_lines);
+    printf("All sorting is completed\n");
 
 }
 
@@ -61,32 +65,42 @@ char** getStringsFromFile(const char* file_name, unsigned int* num_of_lines_read
     assert(file_name);
     assert(num_of_lines_read_p);
 
-    FILE* file = safeOpen(file_name, "r");
+    FILE* file = safeOpen(file_name, "rb");
+    int descriptor = fileno(file);
+    struct stat file_stats = {};
+    fstat(descriptor, &file_stats);
 
-    char* buffer = (char*) safeCalloc(BUFFER_SIZE, sizeof(char));
+    char* text = (char*) safeCalloc(file_stats.st_size, sizeof(char)); //Выделяем память непосредственно под текст
+    fread((void*) text, sizeof(char), file_stats.st_size, file);
 
     unsigned int index_size = MIN_INDEX_SIZE;
-    int          num_of_chars_in_str = 0;
-
     *num_of_lines_read_p = 0;
 
-    char** index = (char**) safeCalloc(index_size, sizeof(char*)); //Дает указатель на массив указателей на char
+    char** index = (char**) safeCalloc(index_size, sizeof(char*)); //Дает указатель на массив указателей на char //TODO ln index
+    index[*num_of_lines_read_p] = text;
+    (*num_of_lines_read_p)++;
 
-    while((num_of_chars_in_str = myGetline(file, buffer, '\n', BUFFER_SIZE)) != EOF){
+    for(int i = 0; i < file_stats.st_size - 1; i++){// Не проверяем последний символ \n
 
-        if(num_of_chars_in_str == EOF)
-            break;
+        if(text[i] == '\n'){
 
-        if(*num_of_lines_read_p >= index_size)
-            index = (char**) safeRealloc((void*) index, index_size * 2 * sizeof(char*)); //Расширяем память по массив указателей на строки
+            text[i - 1] = '\0';
+            text[i] = '\0';
 
-        index[*num_of_lines_read_p] = (char*) safeCalloc(num_of_chars_in_str, sizeof(char));
-        strcpy(index[*num_of_lines_read_p], buffer);
+            index[*num_of_lines_read_p] = text + i + 1;
 
-        (*num_of_lines_read_p)++;
+            printf("Read %u line, <%s>\n", *num_of_lines_read_p + 1, index[*num_of_lines_read_p - 1]);
+
+            (*num_of_lines_read_p)++;
+        }
     }
 
-    printf("File completely read, number of strings: %u, first string: <%s>, last string: <%s>\n", *num_of_lines_read_p, index[0], index[*num_of_lines_read_p - 1]);
+    text[file_stats.st_size - 2] = '\0';
+    text[file_stats.st_size - 1] = '\0';
+
+    printf("Read %u line, <%s>\n", *num_of_lines_read_p + 1, index[*num_of_lines_read_p - 1]);
+
+    printf("File completely read, number of strings read: %u, first string: <%s>, last string: <%s>\n", *num_of_lines_read_p + 1, index[0], index[*num_of_lines_read_p - 1]);
 
     return index;
 }
@@ -131,7 +145,7 @@ void*  safeRealloc(void* old_pointer, const size_t new_size){
     return new_pointer;
 }
 
-FILE*  safeOpen(const char* file_name, const char* mode){//perror
+FILE*  safeOpen(const char* file_name, const char* mode){//TODO perror
 
     assert(file_name);
     assert(mode);
@@ -168,7 +182,7 @@ int    myGetline(FILE* input, char* str, const int delimiter, const int max_str_
         return EOF;
 
     return char_number + 1;
-}
+}//useless
 
 char** indexCopy(char** old_index, unsigned int num_of_lines){
 
@@ -186,8 +200,8 @@ char** indexCopy(char** old_index, unsigned int num_of_lines){
 
 int    compareAlphabetLeft(const void * a, const void * b){
 
-    const char *str1 = *(const char * const *)a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
-    const char *str2 = *(const char * const *)b;
+    const char* str1 = *(const char * const* )a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
+    const char* str2 = *(const char * const* )b;
 
     unsigned int i = 0;
     unsigned int j = 0;
@@ -225,13 +239,13 @@ int    compareAlphabetLeft(const void * a, const void * b){
     return 0;
 }
 
-int    compareAlphabetRight(const void * a, const void * b){
+int    compareAlphabetRight(const void* a, const void* b){
 
     assert(a);
     assert(b);
 
-    const char *str1 = *(const char * const *)a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
-    const char *str2 = *(const char * const *)b;
+    const char* str1 = *(const char* const* )a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
+    const char* str2 = *(const char* const* )b;
 
     int i = (int) strnlen(str1, MAX_STR_LEN);
     int j = (int) strnlen(str2, MAX_STR_LEN);
@@ -247,6 +261,7 @@ int    compareAlphabetRight(const void * a, const void * b){
 
     i--;
     j--;
+
     while(i >= 0 && j >= 0){
 
         if(!isalpha((int) str1[i]) && str1[i] != '\0'){
@@ -278,4 +293,105 @@ int    compareAlphabetRight(const void * a, const void * b){
     }
 
     return 0;
+}
+
+void myQSort(char* const        array,
+             const unsigned int number_of_elements,
+             const unsigned int size_of_elem,
+             int (*             compare)(const void* a, const void* b)){
+
+    assert(array);
+
+    if(number_of_elements <= 1){
+
+        return;
+
+    }else if(number_of_elements == 2){
+
+        if(compare((const void*) array, (const void*) (array + size_of_elem)) == 1)
+            swap(array, array + size_of_elem, size_of_elem);
+
+        return;
+
+    }else if(number_of_elements == 3){
+
+        if(compare((const void*) array, (const void*) (array + size_of_elem)) == 1)
+            swap(array, array + size_of_elem, size_of_elem);
+
+        if(compare((const void*) (array + size_of_elem), (const void*) (array + 2 * size_of_elem)) == 1)
+            swap(array + size_of_elem, array + 2 * size_of_elem, size_of_elem);
+
+        if(compare((const void*) array, (const void*) (array + size_of_elem)) == 1)
+            swap(array, array + size_of_elem, size_of_elem);
+
+        return;
+
+    }
+
+    char* pivot = array + (number_of_elements - 1) * size_of_elem;
+
+    int left = 0; //Индекс левого указателя
+    int right = number_of_elements - 2; //Индекс правого указателя, pivot уже в нужной части массива
+
+    int is_bad_left = 0; //Элемент, на который указывает левый указатель, должен лежать справа
+    int is_bad_right = 0; //Элемент, на который указывает правый указатель, должен лежать слева
+
+    while(left <= right){ //Ждем, когда они пройдут друг через друга, между ними будет линия разделения
+
+        if(is_bad_left == 0){ //Если левый элемент не зафиксирован как большой
+
+            if(compare((const void*) (array + left * size_of_elem), (const void*) pivot) >= 0){ //Если левый элемент большой
+
+                is_bad_left = 1;
+
+            }else{ //Если левый элемент маленький
+
+                left++;
+            }
+
+
+        }else if(is_bad_right == 0){ //Если правый элемент не зафиксирован как маленький
+
+            if(compare((const void*) (array + right * size_of_elem), (const void*) (pivot)) < 0){ //Если правый элемент маленький
+
+                is_bad_right = 1;
+
+            }else{
+
+                right--;
+            }
+
+        }else if(is_bad_left == 1 && is_bad_right == 1 && left < right){
+
+            swap(array + size_of_elem * left, array + size_of_elem * right, size_of_elem);
+
+            is_bad_left = 0;
+            is_bad_right = 0;
+
+            left++;
+            right--;
+        }
+    }
+
+    swap(array + (number_of_elements - 1) * size_of_elem, array + left * size_of_elem, size_of_elem); //Меняем самый маленький элемент >= pivot с pivot
+
+
+    myQSort(array,  right + 1, size_of_elem, compare); // Сортируем все до центрального pivot
+    myQSort(array + (left + 1) * size_of_elem, number_of_elements - (right + 1) - 1, size_of_elem, compare); //Сортируем все после центрального pivot
+
+}
+
+void swap(char* const a, char* const b, const int size_of_elem){
+
+    assert(a);
+    assert(b);
+    assert(size_of_elem > 0);
+
+    for(int i = 0; i < size_of_elem; i++){
+
+        char temp = *(a + i);
+        *(a + i) = *(b + i);
+        *(b + i) = temp;
+    }
+
 }
