@@ -11,11 +11,11 @@
 #define VIOLET  "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-void debugPrintTheArray(char* array, int number_of_elements, int elem_size, int left, int right);
-void sortTheArray(char* array, int size_of_elem, int number_of_elements, int (* compare)(const char* a, const char* b));
-void swap(char* a, char* b, int size_of_elem);
-void defaultPrintTheArray(char* array, int number_of_elements, int elem_size);
-void requestInputData(int* elem_size_p, int* number_of_elements_p, int (**(compare_function_p_p))(const char* a, const char* b));
+void debugPrintTheArray(const char* const array, const int number_of_elements, const int elem_size, const int left, const int right, const int number_of_elements_before);
+void sortTheArray(char* const array, const int size_of_elem, const int number_of_elements, int (* compare)(const char* a, const char* b), const int number_of_elements_before);
+void swap(char* const a, char* const b, const int size_of_elem);
+void defaultPrintTheArray(const char* const array, const int number_of_elements, const int elem_size);
+void requestInputData(int* const elem_size_p, int* const number_of_elements_p,  int (**(compare_function_p_p))(const char* a, const char* b));
 void enterElements(char* const array, const int elem_size, const int number_of_elements);
 
 int  compareIntUp(const char* a, const char* b);
@@ -37,14 +37,14 @@ int main(){
 
     defaultPrintTheArray(array, number_of_elements, elem_size);
 
-    sortTheArray((char*)array, elem_size, number_of_elements, compare_function_p);
+    sortTheArray((char*)array, elem_size, number_of_elements, compare_function_p, 0);
 
     defaultPrintTheArray(array, number_of_elements, elem_size);
 
     free(array);
 }
 
-void defaultPrintTheArray(char* array, int number_of_elements, int elem_size){
+void defaultPrintTheArray(const char* const array, const int number_of_elements, const int elem_size){
 
     assert(array);
     assert(elem_size == sizeof(char) || elem_size == sizeof(int));
@@ -55,26 +55,46 @@ void defaultPrintTheArray(char* array, int number_of_elements, int elem_size){
 
         for(int i = 0; i < number_of_elements; i++){
 
-            printf("%c ", (int)*(array + i * sizeof(char)));
+            printf("%-5c ", (int)*(array + i * sizeof(char)));
         }
 
     }else{
 
         for(int i = 0; i < number_of_elements; i++){
 
-            printf("%d ", *(array + i * sizeof(int)));
+            printf("%-5d ", *(array + i * sizeof(int)));
         }
     }
 
     printf("\n" DEFAULT );
+
+    for(int i = 0; i < number_of_elements; i++){
+
+        if(elem_size == sizeof(char)){
+
+            printf("%-5d " DEFAULT, i);
+
+        }else{
+
+            printf("%-5d " DEFAULT, i);
+        }
+    }
+
+    printf("\n");
 }
 
-void debugPrintTheArray(char* array, int number_of_elements, int elem_size, int left, int right){
+void debugPrintTheArray(
+     const char* const array, const int number_of_elements, const int elem_size, const int left, const int right, const int number_of_elements_before){
 
     assert(array);
     assert(elem_size == sizeof(char) || elem_size == sizeof(int));
 
     printf(DEFAULT "Array:\n" CYAN );
+
+    for(int i = 0; i < number_of_elements_before; i++){
+
+        printf("     ");
+    }
 
     for(int i = 0; i < number_of_elements; i++){
 
@@ -96,20 +116,39 @@ void debugPrintTheArray(char* array, int number_of_elements, int elem_size, int 
 
         if(elem_size == sizeof(char)){
 
-            printf("%c " DEFAULT, *(array + i));
+            printf("%-5c " DEFAULT, *(array + i));
 
         }else{
 
-            printf("%d " DEFAULT, *(((int*) array) + i));
+            printf("%-5d " DEFAULT, *(((const int*) array) + i));
         }
 
+    }
+
+    printf("\n");
+
+    for(int i = 0; i < number_of_elements_before; i++){
+
+        printf("     ");
+    }
+
+    for(int i = 0; i < number_of_elements; i++){
+
+        if(elem_size == sizeof(char)){
+
+            printf("%-5d " DEFAULT, i);
+
+        }else{
+
+            printf("%-5d " DEFAULT, i);
+        }
     }
 
     getchar();
 
 }
 
-void sortTheArray(char* array, int size_of_elem, int number_of_elements, int (* compare)(const char* a, const char* b)){
+void sortTheArray(char* const array, const int size_of_elem, const int number_of_elements, int (* compare)(const char* a, const char* b), const int number_of_elements_before){
 
     assert(array);
     assert(number_of_elements >= 0);
@@ -277,7 +316,7 @@ int compareCharDown(const char* a, const char* b){
     return 0;
 }
 
-void swap(char* a, char* b, int size_of_elem){
+void swap(char* const a, char* const b, const int size_of_elem){
 
     assert(a);
     assert(b);
@@ -292,7 +331,7 @@ void swap(char* a, char* b, int size_of_elem){
 
 }
 
-void requestInputData(int* elem_size_p, int* number_of_elements_p, int (**(compare_function_p_p))(const char* a, const char* b)){
+void requestInputData(int* const elem_size_p, int* const number_of_elements_p, int (**(compare_function_p_p))(const char* a, const char* b)){
 
     printf("Enter the number of elements: ");
     scanf("%d", number_of_elements_p);
@@ -367,4 +406,5 @@ void enterElements(char* const array, const int elem_size, const int number_of_e
             scanf("%d", ((int*) array) + i);
         }
     }
+    getchar();
 }
