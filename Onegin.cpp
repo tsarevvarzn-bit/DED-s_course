@@ -15,24 +15,22 @@
 #define VIOLET  "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-const unsigned int MIN_INDEX_SIZE = 10000;
+const unsigned int MIN_INDEX_SIZE = 100;
 const unsigned int MAX_STR_LEN = 10000;
 
 void*  safeCalloc(const size_t number_of_elements, const size_t size_of_element);
-void*  safeRealloc(void* old_pointer, const size_t new_size);
+void*  safeRealloc(void* const old_pointer, const size_t new_size);
 FILE*  safeOpen(const char* file_name, const char* mode);
 
-int    myGetline(FILE* input, char* str, const int delimiter, const int max_str_size);
 void   swap(char* const a, char* const b, const int size_of_elem);
-
 void   myQSort(char* const        array,
                const unsigned int number_of_elements,
                const unsigned int size_of_elem,
                int (*             compare)(const void* a, const void* b));
 
-char** getStringsFromFile(const char* file_name, unsigned int* num_of_lines_read_p);
-void   printArray(FILE* out, char** index, unsigned int num_of_lines);
-char** indexCopy(char** old_index, unsigned int num_of_lines);
+char** getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p, unsigned int* const num_of_characters_read_p);
+void   printArray(FILE* out, const char* const * const index, const unsigned int num_of_lines);
+void   printText(FILE* out, const char* const text, const unsigned int number_of_lines);
 
 int    compareAlphabetLeft(const void* a, const void* b);
 int    compareAlphabetRight(const void* a, const void* b);
@@ -40,47 +38,60 @@ int    compareAlphabetRight(const void* a, const void* b);
 int main(){
 
     unsigned int number_of_lines = 0;
+    unsigned int num_of_characters_read = 0;
 
-    char** index_orig = getStringsFromFile("Onegin_text.txt", &number_of_lines);// TODO union K&R
-
+    char** index = getStringsFromFile("Onegin_text.txt", &number_of_lines, &num_of_characters_read);
+    char* text = index[0];
     FILE* out = safeOpen("Onegin_sorted.txt", "w");
 
-    char** index_sorted_left = indexCopy(index_orig, number_of_lines); //TODO dont copy
-    qsort((void*) index_sorted_left, (size_t) number_of_lines, sizeof(char*), compareAlphabetLeft);
-    printArray(out, index_sorted_left, number_of_lines);
+    qsort((void*) index, (size_t) number_of_lines, sizeof(char*), compareAlphabetLeft);
+    printArray(out, index, number_of_lines);
 
-    char** index_sorted_right = indexCopy(index_orig, number_of_lines);
-    myQSort((char*) index_sorted_right, number_of_lines, sizeof(char*), compareAlphabetRight);
+    myQSort((char*) index, number_of_lines, sizeof(char*), compareAlphabetRight);
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
-    printArray(out, index_sorted_right, number_of_lines);
+    printArray(out, index, number_of_lines);
 
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
-    printArray(out, index_orig, number_of_lines);
-    printf("All sorting is completed\n");
+    printText(out, text, number_of_lines);
+    printf("All sorting is completed and printed in file\n");
 
+    free(text);
+    free(index);
 }
 
-char** getStringsFromFile(const char* file_name, unsigned int* num_of_lines_read_p){
+char** getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p, unsigned int* const num_of_characters_read_p){
 
     assert(file_name);
     assert(num_of_lines_read_p);
+    assert(num_of_characters_read_p);
 
     FILE* file = safeOpen(file_name, "rb");
     int descriptor = fileno(file);
     struct stat file_stats = {};
     fstat(descriptor, &file_stats);
+    *num_of_characters_read_p = file_stats.st_size;
 
-    char* text = (char*) safeCalloc(file_stats.st_size, sizeof(char)); //Выделяем память непосредственно под текст
-    fread((void*) text, sizeof(char), file_stats.st_size, file);
+    char* text = (char*) safeCalloc(*num_of_characters_read_p, sizeof(char)); //Выделяем память непосредственно под текст
+    fread((void*) text, sizeof(char), *num_of_characters_read_p, file);
 
     unsigned int index_size = MIN_INDEX_SIZE;
     *num_of_lines_read_p = 0;
 
-    char** index = (char**) safeCalloc(index_size, sizeof(char*)); //Дает указатель на массив указателей на char //TODO ln index
+    char** index = (char**) safeCalloc(index_size, sizeof(char*)); //Дает указатель на массив указателей на char
     index[*num_of_lines_read_p] = text;
     (*num_of_lines_read_p)++;
 
-    for(int i = 0; i < file_stats.st_size - 1; i++){// Не проверяем последний символ \n
+    for(unsigned int i = 0; i < *num_of_characters_read_p - 1; i++){// Не проверяем последний символ \n
+
+        if((*num_of_lines_read_p) >= index_size){
+
+            printf("We need to reallocate memory for index: " YELLOW "%p" DEFAULT ", index size: %u, lines read: %u\n", index, index_size, *num_of_lines_read_p);
+
+            index_size *= 2;
+            index = (char**) safeRealloc(index, index_size * sizeof(char*));
+
+            printf("We reallocate memory for index:         " GREEN "%p" DEFAULT ", index size: %u, lines read: %u\n", index, index_size, *num_of_lines_read_p);
+        }
 
         if(text[i] == '\n'){
 
@@ -89,23 +100,23 @@ char** getStringsFromFile(const char* file_name, unsigned int* num_of_lines_read
 
             index[*num_of_lines_read_p] = text + i + 1;
 
-            printf("Read %u line, <%s>\n", *num_of_lines_read_p + 1, index[*num_of_lines_read_p - 1]);
+            //printf("Read %u line, <%s>\n", *num_of_lines_read_p, index[*num_of_lines_read_p - 1]);
 
             (*num_of_lines_read_p)++;
         }
     }
 
-    text[file_stats.st_size - 2] = '\0';
-    text[file_stats.st_size - 1] = '\0';
+    text[*num_of_characters_read_p - 2] = '\0';
+    text[*num_of_characters_read_p - 1] = '\0';
 
-    printf("Read %u line, <%s>\n", *num_of_lines_read_p + 1, index[*num_of_lines_read_p - 1]);
+    //printf("Read %u line, <%s>\n", *num_of_lines_read_p, index[*num_of_lines_read_p - 1]);
 
-    printf("File completely read, number of strings read: %u, first string: <%s>, last string: <%s>\n", *num_of_lines_read_p + 1, index[0], index[*num_of_lines_read_p - 1]);
+    printf("File completely read, number of strings read: %u, first string: <%s>, last string: <%s>\n", *num_of_lines_read_p, index[0], index[*num_of_lines_read_p - 1]);
 
     return index;
 }
 
-void   printArray(FILE* out, char** index, unsigned int num_of_lines){
+void   printArray(FILE* out, const char* const * const index, const unsigned int num_of_lines){
 
     assert(index);
     assert(*index);
@@ -114,7 +125,7 @@ void   printArray(FILE* out, char** index, unsigned int num_of_lines){
 
     for(unsigned int i = 0; i < num_of_lines; i++){
 
-        fprintf(out, "%u pointer: %p <%s>\n", i, index[i], index[i]);
+        fprintf(out, "%u pointer: %p <%s>\n", i + 1, index[i], index[i]);
     }
 }
 
@@ -132,7 +143,7 @@ void*  safeCalloc(const size_t number_of_elements, const size_t size_of_element)
     return pointer;
 }
 
-void*  safeRealloc(void* old_pointer, const size_t new_size){
+void*  safeRealloc(void* const old_pointer, const size_t new_size){
 
     void* new_pointer = realloc(old_pointer, new_size);
 
@@ -145,7 +156,7 @@ void*  safeRealloc(void* old_pointer, const size_t new_size){
     return new_pointer;
 }
 
-FILE*  safeOpen(const char* file_name, const char* mode){//TODO perror
+FILE*  safeOpen(const char* const file_name, const char* const mode){
 
     assert(file_name);
     assert(mode);
@@ -161,52 +172,15 @@ FILE*  safeOpen(const char* file_name, const char* mode){//TODO perror
     return file_p;
 }
 
-int    myGetline(FILE* input, char* str, const int delimiter, const int max_str_size){
-
-    assert(input);
-    assert(str);
-    assert(delimiter >= -1 && delimiter <= 255);
-
-    int c = 0;
-    int char_number = 0;
-
-    while((c = getc(input)) != EOF && (c != delimiter) && max_str_size - 1 > char_number){
-
-        str[char_number] = (char) c;
-        char_number++;
-    }
-
-    str[char_number] = '\0';
-
-    if(c == EOF)
-        return EOF;
-
-    return char_number + 1;
-}//useless
-
-char** indexCopy(char** old_index, unsigned int num_of_lines){
-
-    assert(old_index);
-
-    char** new_index = (char**) safeCalloc(num_of_lines, sizeof(char*)); //Выделяем память под массив char*, указатель на первый элемент - имя массива, char**
-
-    for(unsigned int i = 0; i < num_of_lines; i++){
-
-        new_index[i] = old_index[i]; //Теперь указывают на одну и ту же строку оригинала
-    }
-
-    return new_index;
-}
-
 int    compareAlphabetLeft(const void * a, const void * b){
 
-    const char* str1 = *(const char * const* )a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
-    const char* str2 = *(const char * const* )b;
+    const char* str1 = *((const char * const* ) a);
+    const char* str2 = *((const char * const* ) b);
 
     unsigned int i = 0;
     unsigned int j = 0;
 
-    while(i <= MAX_STR_LEN && j <= MAX_STR_LEN ){
+    while(i <= MAX_STR_LEN && j <= MAX_STR_LEN){
 
         if(!isalpha((int) str1[i]) && str1[i] != '\0'){
 
@@ -244,8 +218,8 @@ int    compareAlphabetRight(const void* a, const void* b){
     assert(a);
     assert(b);
 
-    const char* str1 = *(const char* const* )a; // const void* - не меняется то, на что мы указываем, мы указываем на char** => все дальше в змейке не должно меняться
-    const char* str2 = *(const char* const* )b;
+    const char* str1 = *((const char* const* ) a);
+    const char* str2 = *((const char* const* ) b);
 
     int i = (int) strnlen(str1, MAX_STR_LEN);
     int j = (int) strnlen(str2, MAX_STR_LEN);
@@ -298,7 +272,7 @@ int    compareAlphabetRight(const void* a, const void* b){
 void myQSort(char* const        array,
              const unsigned int number_of_elements,
              const unsigned int size_of_elem,
-             int (*             compare)(const void* a, const void* b)){
+             int (*             compare)(const void* a, const void* b)){ //TODO void*
 
     assert(array);
 
@@ -394,4 +368,30 @@ void swap(char* const a, char* const b, const int size_of_elem){
         *(b + i) = temp;
     }
 
+}
+
+void printText(FILE* out, const char* const text, const unsigned int number_of_lines){
+
+    assert(out);
+    assert(text);
+
+    unsigned int i = 0;
+    unsigned int number_of_printed_lines = 1;
+
+    fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text, text);
+
+    while(number_of_printed_lines < number_of_lines){
+
+        if(text[i] == '\0'){
+
+            i += 2;
+
+            number_of_printed_lines++;
+            fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text + i, text + i);
+
+        }else{
+
+            i++;
+        }
+    }
 }
