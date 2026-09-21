@@ -23,7 +23,7 @@ void*  safeRealloc(void* const old_pointer, const size_t new_size);
 FILE*  safeOpen(const char* file_name, const char* mode);
 
 void   swap(char* const a, char* const b, const int size_of_elem);
-void   myQSort(char* const        array,
+void   myQSort(void* const        array_void,
                const unsigned int number_of_elements,
                const unsigned int size_of_elem,
                int (*             compare)(const void* a, const void* b));
@@ -41,14 +41,14 @@ int main(){
     unsigned int num_of_characters_read = 0;
 
     char** index = getStringsFromFile("Onegin_text.txt", &number_of_lines, &num_of_characters_read);
-    char* text = index[0];
-    FILE* out = safeOpen("Onegin_sorted.txt", "w");
+    char*  text = index[0];
+    FILE*  out = safeOpen("Onegin_sorted.txt", "w");
 
     qsort((void*) index, (size_t) number_of_lines, sizeof(char*), compareAlphabetLeft);
     printArray(out, index, number_of_lines);
 
-    myQSort((char*) index, number_of_lines, sizeof(char*), compareAlphabetRight);
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
+    myQSort((void*) index, number_of_lines, sizeof(char*), compareAlphabetRight);
     printArray(out, index, number_of_lines);
 
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
@@ -269,12 +269,14 @@ int    compareAlphabetRight(const void* a, const void* b){
     return 0;
 }
 
-void myQSort(char* const        array,
+void myQSort(void* const        array_void,
              const unsigned int number_of_elements,
              const unsigned int size_of_elem,
-             int (*             compare)(const void* a, const void* b)){ //TODO void*
+             int (*             compare)(const void* a, const void* b)){
 
-    assert(array);
+    assert(array_void);
+
+    char* array = (char*) array_void;
 
     if(number_of_elements <= 1){
 
@@ -350,8 +352,8 @@ void myQSort(char* const        array,
     swap(array + (number_of_elements - 1) * size_of_elem, array + left * size_of_elem, size_of_elem); //Меняем самый маленький элемент >= pivot с pivot
 
 
-    myQSort(array,  right + 1, size_of_elem, compare); // Сортируем все до центрального pivot
-    myQSort(array + (left + 1) * size_of_elem, number_of_elements - (right + 1) - 1, size_of_elem, compare); //Сортируем все после центрального pivot
+    myQSort((void*) array,  right + 1, size_of_elem, compare); // Сортируем все до центрального pivot
+    myQSort((void*) (array + (left + 1) * size_of_elem), number_of_elements - (right + 1) - 1, size_of_elem, compare); //Сортируем все после центрального pivot
 
 }
 

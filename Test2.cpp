@@ -12,7 +12,7 @@
 #define CYAN    "\033[1;36m"
 
 void debugPrintTheArray(const char* const array, const int number_of_elements, const int elem_size, const int left, const int right, const int number_of_elements_before);
-void sortTheArray(char* const array, const int size_of_elem, const int number_of_elements, int (* compare)(const char* a, const char* b), const int number_of_elements_before);
+void sortTheArray(void* const array_void, const int size_of_elem, const int number_of_elements, int (* compare)(const char* a, const char* b), const int number_of_elements_before);
 void swap(char* const a, char* const b, const int size_of_elem);
 void defaultPrintTheArray(const char* const array, const int number_of_elements, const int elem_size);
 void requestInputData(int* const elem_size_p, int* const number_of_elements_p,  int (**(compare_function_p_p))(const char* a, const char* b));
@@ -37,7 +37,7 @@ int main(){
 
     defaultPrintTheArray(array, number_of_elements, elem_size);
 
-    sortTheArray((char*)array, elem_size, number_of_elements, compare_function_p, 0);
+    sortTheArray((void*)array, elem_size, number_of_elements, compare_function_p, 0);
 
     defaultPrintTheArray(array, number_of_elements, elem_size);
 
@@ -148,10 +148,16 @@ void debugPrintTheArray(
 
 }
 
-void sortTheArray(char* const array, const int size_of_elem, const int number_of_elements, int (* compare)(const char* a, const char* b), const int number_of_elements_before){
+void sortTheArray(void* const array_void,
+                  const int size_of_elem,
+                  const int number_of_elements,
+                  int (* compare)(const char* a, const char* b),
+                  const int number_of_elements_before){
 
-    assert(array);
+    assert(array_void);
     assert(number_of_elements >= 0);
+
+    char* array = (char*) array_void;
 
     if(number_of_elements <= 1){
 
@@ -205,7 +211,7 @@ void sortTheArray(char* const array, const int size_of_elem, const int number_of
 
                 is_bad_left = 1;
 
-                printf("Find bad left, left = %d, right = %d, pivot = %d\n", left, right, pivot_value);
+                printf("Find bad left, " GREEN "left" DEFAULT " = %d, " YELLOW "right" DEFAULT " = %d, pivot = %d\n", left, right, pivot_value);
                 debugPrintTheArray(array, number_of_elements, size_of_elem, left, right, number_of_elements_before);
 
             }else{ //Если левый элемент маленький
@@ -220,7 +226,7 @@ void sortTheArray(char* const array, const int size_of_elem, const int number_of
 
                 is_bad_right = 1;
 
-                printf("Find bad right, left = %d, right = %d, pivot = %d\n", left, right, pivot_value);
+                printf("Find bad right, " GREEN "left" DEFAULT " = %d, " YELLOW "right" DEFAULT " = %d, pivot = %d\n", left, right, pivot_value);
                 debugPrintTheArray(array, number_of_elements, size_of_elem, left, right, number_of_elements_before);
 
             }else{
@@ -232,7 +238,7 @@ void sortTheArray(char* const array, const int size_of_elem, const int number_of
 
             swap(array + size_of_elem * left, array + size_of_elem * right, size_of_elem);
 
-            printf("Swapped, left = %d, right = %d, pivot = %d\n", left, right, pivot_value);
+            printf("Swapped,  " GREEN "left" DEFAULT " = %d, " YELLOW "right" DEFAULT " = %d, pivot = %d\n", left, right, pivot_value);
             debugPrintTheArray(array, number_of_elements, size_of_elem, left, right, number_of_elements_before);
 
             is_bad_left = 0;
@@ -245,12 +251,12 @@ void sortTheArray(char* const array, const int size_of_elem, const int number_of
 
     swap(array + (number_of_elements - 1) * size_of_elem, array + left * size_of_elem, size_of_elem); //Меняем самый маленький элемент >= pivot с pivot
 
-    printf(DEFAULT "\nThe array is partially sorted, left = %d, right = %d, pivot = %d\n", left, right, pivot_value);
+    printf(DEFAULT "\nThe array is partially sorted,  " GREEN "left" DEFAULT " = %d, " YELLOW "right" DEFAULT " = %d, pivot = %d\n", left, right, pivot_value);
     debugPrintTheArray(array, number_of_elements, size_of_elem, left, right, number_of_elements_before); //ТОЛЬКО ДЛЯ INT !!!
 
 
-    sortTheArray(array, size_of_elem, right + 1, compare, number_of_elements_before); // Сортируем все до центрального pivot
-    sortTheArray(array + (left + 1) * size_of_elem, size_of_elem, number_of_elements - (right + 1) - 1, compare, left + 1); //Сортируем все после центрального pivot
+    sortTheArray((void*) array, size_of_elem, right + 1, compare, number_of_elements_before); // Сортируем все до центрального pivot
+    sortTheArray((void*) (array + (left + 1) * size_of_elem), size_of_elem, number_of_elements - (right + 1) - 1, compare, left + 1); //Сортируем все после центрального pivot
 
 }
 
