@@ -23,30 +23,30 @@ struct smartString {
     unsigned int len;
 };
 
-smartString* getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p);
-size_t getSizeOfFile(           FILE* file);
-void   printArray(              FILE* out, const smartString* const index, const unsigned int num_of_lines);
-void   printText(               FILE* out, const char* const text, const unsigned int number_of_lines);
+smartString* getStringsFromFile(  const char* const file_name, unsigned int* const num_of_lines_read_p);
+size_t       getSizeOfFile(       FILE* file);
+void         printArray(          FILE* out, const smartString* const index, const unsigned int num_of_lines);
+void         printText(           FILE* out, const char* const text, const unsigned int number_of_lines);
 
-void*  safeCalloc(              const size_t number_of_elements, const size_t size_of_element);
-void*  safeRealloc(             void* const old_pointer, const size_t new_size);
-FILE*  safeOpen(                const char* file_name, const char* mode);
+void*        safeCalloc(          const size_t number_of_elements, const size_t size_of_element);
+void*        safeRealloc(         void* const old_pointer, const size_t new_size);
+FILE*        safeOpen(            const char* file_name, const char* mode);
 
 
-void   myQSort(                 void* const        array_void,
-                                const unsigned int number_of_elements,
-                                const unsigned int size_of_elem,
-                                int (*             compare)(const void* a, const void* b));
+void         myQSort(             void* const        array_void,
+                                  const unsigned int number_of_elements,
+                                  const unsigned int size_of_elem,
+                                  int (*             compare)(const void* a, const void* b));
 
-void   trivialSort(             void* const        array_void,
-                                const unsigned int number_of_elements,
-                                const unsigned int size_of_elem,
-                                int (*             compare)(const void* a, const void* b));
+void         trivialSort(         void* const        array_void,
+                                  const unsigned int number_of_elements,
+                                  const unsigned int size_of_elem,
+                                  int (*             compare)(const void* a, const void* b));
 
-void   swap                (    char* const a, char* const b, const unsigned int size_of_elem);
+void         swap                (char* const a, char* const b, const unsigned int size_of_elem);
 
-int    compareAlphabetLeft (    const void* a, const void* b);
-int    compareAlphabetRight(    const void* a, const void* b);
+int          compareAlphabetLeft (const void* a, const void* b);
+int          compareAlphabetRight(const void* a, const void* b);
 
 
 
