@@ -16,7 +16,7 @@
 #define VIOLET  "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-const unsigned int MIN_INDEX_SIZE = 100;
+const unsigned int MIN_INDEX_SIZE = 1000;
 const unsigned int MAX_STR_LEN = 10000;
 
 struct smartString {
@@ -56,7 +56,7 @@ void         printSeparator(      FILE* out);
 int main(){
 
     unsigned int number_of_lines = 0;
-    smartString* index = getStringsFromFile("Onegin_text.txt", &number_of_lines); //TODO во время считывания файла сохранять длину каждой строки, index - массив структур (указатель на строку, ее длина)
+    smartString* index = getStringsFromFile("Onegin_text.txt", &number_of_lines);
     char*  text = index[0].str;
     FILE*  out = safeOpen("Onegin_sorted.txt", "w");
 
@@ -75,7 +75,6 @@ int main(){
     free(index);
     fclose(out);
 
-    //TODO readme, где todo -> фичи
 }
 
 smartString* getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p){
@@ -413,7 +412,7 @@ int    compareAlphabetRight(const void* a, const void* b){
     assert(a);
     assert(b);//TODO - DONE ассерт на то, что указатель *a тоже не нулевой, что там есть строка
 
-    const smartString smart_str1 = *((const smartString *) a); //TODO -DONE убрать ВСЕ strnlen'ы
+    const smartString smart_str1 = *((const smartString *) a);
     const smartString smart_str2 = *((const smartString *) b);
 
     const char * const str1 = smart_str1.str;
