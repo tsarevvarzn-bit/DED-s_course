@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #define DEFAULT "\033[0m"
 #define BOLD    "\033[1m"
@@ -48,32 +49,31 @@ void         swap                (char* const a, char* const b, const unsigned i
 int          compareAlphabetLeft (const void* a, const void* b);
 int          compareAlphabetRight(const void* a, const void* b);
 
+void         printSeparator(      FILE* out);
+
 
 
 int main(){
 
     unsigned int number_of_lines = 0;
-
     smartString* index = getStringsFromFile("Onegin_text.txt", &number_of_lines); //TODO во время считывания файла сохранять длину каждой строки, index - массив структур (указатель на строку, ее длина)
     char*  text = index[0].str;
     FILE*  out = safeOpen("Onegin_sorted.txt", "w");
 
-    //printArray(out, index, number_of_lines);
     qsort((void*) index, (size_t) number_of_lines, sizeof(smartString), compareAlphabetLeft);
     printArray(out, index, number_of_lines);
-
-    fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
+    printSeparator(out);
 
     myQSort((void*) index, number_of_lines, sizeof(smartString), compareAlphabetRight);
     printArray(out, index, number_of_lines);
-
-    fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
+    printSeparator(out);
 
     printText(out, text, number_of_lines);
     printf("All sorting is completed and printed in file\n");
 
     free(text);
     free(index);
+    fclose(out);
 
     //TODO readme, где todo -> фичи
 }
@@ -97,7 +97,7 @@ smartString* getStringsFromFile(const char* const file_name, unsigned int* const
     unsigned int index_size = MIN_INDEX_SIZE;
     unsigned int index_of_first_ch_in_str = 0;
 
-    for(unsigned int i = 0; i < num_of_characters_read - 1; i++){// Не проверяем последний символ \n
+    for(unsigned int i = 0; i < num_of_characters_read - 1; i++){
 
         if((*num_of_lines_read_p) >= index_size){
 
@@ -116,12 +116,10 @@ smartString* getStringsFromFile(const char* const file_name, unsigned int* const
             text[i - 1] = '\0'; //Перед ним стоит \r
             text[i] = '\0';
 
-            index[*num_of_lines_read_p].str = text + i + 1; //Записываем начало следующей строки, в условии цикла проверяется выход за границу
-            index[*num_of_lines_read_p - 1].len = i - index_of_first_ch_in_str - 1; //Записываем длину предыдущей строки
+            index[*num_of_lines_read_p].str = text + i + 1;
+            index[*num_of_lines_read_p - 1].len = i - index_of_first_ch_in_str - 1;
 
             index_of_first_ch_in_str = i + 1;
-
-            //printf("Read %u line, len %u, <%s>\n", *num_of_lines_read_p, index[*num_of_lines_read_p - 1].len, index[*num_of_lines_read_p - 1].str);
 
             (*num_of_lines_read_p)++;
         }
@@ -129,12 +127,12 @@ smartString* getStringsFromFile(const char* const file_name, unsigned int* const
 
     text[num_of_characters_read - 2] = '\0';
     text[num_of_characters_read - 1] = '\0';
-    index[*num_of_lines_read_p - 1].len = num_of_characters_read - index_of_first_ch_in_str - 3; //Записываем длину последней строки
-
-    //printf("Read %u line, len %u, <%s>\n", *num_of_lines_read_p, index[*num_of_lines_read_p - 1].len, index[*num_of_lines_read_p - 1].str);
+    index[*num_of_lines_read_p - 1].len = num_of_characters_read - index_of_first_ch_in_str - 3;
 
     printf("File completely read, number of strings read: %u, first string: <%s>, len: %u, last string: <%s>, len: %u\n",
     *num_of_lines_read_p, index[0].str, index[0].len, index[*num_of_lines_read_p - 1].str, index[*num_of_lines_read_p - 1].len);
+
+    fclose(file);
 
     return index;
 }
@@ -198,9 +196,9 @@ void*  safeCalloc(const size_t number_of_elements, const size_t size_of_element)
 
     if(pointer == NULL){
 
-        printf(RED "ERROR: calloc can't allocate enough memory, number of elements: %zu, size of one element: %zu, total: %zu" DEFAULT,
-               number_of_elements, size_of_element, number_of_elements * size_of_element);
-        exit(1);
+        printf(RED "ERROR: calloc(number_of_elements, size_of_element), number of elements: %zu, size of one element: %zu, total: %zu, failed: %s" DEFAULT,
+               number_of_elements, size_of_element, number_of_elements * size_of_element, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     return pointer;
@@ -214,8 +212,9 @@ void*  safeRealloc(void* const old_pointer, const size_t new_size){
 
     if(new_pointer == NULL){
 
-        printf(RED "ERROR: realloc can't allocate enough memory, old pointer: %p, new pointer: %p, new size %zu" DEFAULT, old_pointer, new_pointer, new_size);
-        exit(1);
+        printf(RED "ERROR: realloc(old_pointer, new_size), old pointer: %p, new size %zu, failed: %s" DEFAULT,
+               old_pointer, new_size, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     return new_pointer;
@@ -230,8 +229,9 @@ FILE*  safeOpen(const char* const file_name, const char* const mode){
 
     if(file_p == NULL){
 
-        printf(RED "ERROR: fopen can't open file, name of the file: %s, mode: %s" DEFAULT, file_name, mode);
-        exit(1);
+        printf(RED "ERROR: fopen(file_name, mode), name of the file: %s, mode: %s, failed: %s" DEFAULT,
+        file_name, mode, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     return file_p;
@@ -258,8 +258,8 @@ void   myQSort(void* const        array_void,
     int left = 0;
     int right = number_of_elements - 2; //Индекс правого указателя, separating_element_p уже в нужной части массива
 
-    char is_bad_left = 0; //Элемент, на который указывает левый указатель, должен лежать справа
-    char is_bad_right = 0; //Элемент, на который указывает правый указатель, должен лежать слева
+    bool is_bad_left = 0; //Элемент, на который указывает левый указатель, должен лежать справа
+    bool is_bad_right = 0; //Элемент, на который указывает правый указатель, должен лежать слева
 
     while(left <= right){ //Ждем, когда они пройдут друг через друга, между ними будет линия разделения
 
@@ -375,13 +375,13 @@ int    compareAlphabetLeft(const void * a, const void * b){
     unsigned int i = 0;
     unsigned int j = 0;
 
-    while(i <= MAX_STR_LEN && j <= MAX_STR_LEN){
+    while(i < smart_str1.len || j < smart_str2.len){
 
-        if(!isalpha((int) str1[i]) && str1[i] != '\0'){
+        if(!isalpha((int) str1[i]) && i < smart_str1.len){
 
             i++;
 
-        }else if(!isalpha((int) str2[j]) && str2[j] != '\0'){
+        }else if(!isalpha((int) str2[j]) && j < smart_str2.len){
 
             j++;
 
@@ -468,4 +468,10 @@ int    compareAlphabetRight(const void* a, const void* b){
     }
 
     return 0;
+}
+
+void printSeparator(FILE* out){
+
+    assert(out);
+    fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
 }
