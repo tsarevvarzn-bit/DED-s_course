@@ -21,7 +21,7 @@
 
 ## Как скомпилировать и запустить
 
-Скачайте файл `Onegin.cpp`, расположите файл `Onegin_text.txt` в той же папке, что и `.cpp`. В терминале перейдите в эту папку и скомпилируйте `Onegin.cpp`.
+Скачайте репозиторий, вас будет интересовать папка Onegin, расположите в ней файл с исходным текстом. В терминале перейдите в эту папку и скомпилируйте `Onegin_main.cpp`.
 
 Для компиляции проекта подойдёт любой компилятор C++, пример для `g++` (рекомендуется):
 
@@ -32,87 +32,27 @@ g++ .\Onegin.cpp
 После чего компилятор создаст в этой папке исполняемый файл `a.exe`, запустите его:
 
 ```bash
-.\a
+.\a -f Onegin.txt -t Onegin_sorted.txt
 ```
-
+> -f и -t - флаги командной строки, которые нужно написать при вызове, после -f стоит указать имя текстового файла откуда следует брать исходник (может быть любое, не только Onegin.txt), после -t нужно указать имя файла, в который будут помещены отсортированные версии оригинала (если такого файла в папке нет, программа его создаст)
+> 
 **Готово!** В терминале должна появиться информация о работе программы, а в папке — файл `Onegin_sorted.txt` с тремя версиями произведения.
 
 ## Пример работы
 
-Приведу пример работы на первой строфе «Онегина». Вывод в консоль:
-
+В этом репозитории лежит файл Onegin_text.txt - оригинальный текст поэмы, переведенный на английский язык с сохранением рифмы и Onegin_sorted.txt - вывод программы при работе с Onegin_text.txt, при этом вывод в консоль:
 ```text
-We need to reallocate memory for index: 000001B9F3022550, index size: 5, lines read: 5
-We reallocate memory for index:         000001B9F3024730, index size: 10, lines read: 5
-We need to reallocate memory for index: 000001B9F3024730, index size: 10, lines read: 10
-We reallocate memory for index:         000001B9F3024730, index size: 20, lines read: 10
-File completely read, number of strings read: 14, first string: <My uncle's goodness is extreme,>, len: 31, last string: <When will the devil take his ow>, len: 30
+We need to reallocate memory for index: 000001E64DC8EED0, index size: 1000, lines read: 1000                                                      
+We reallocate memory for index:         000001E64DC93D70, index size: 2000, lines read: 1000                                                      
+We need to reallocate memory for index: 000001E64DC93D70, index size: 2000, lines read: 2000                                                      
+We reallocate memory for index:         000001E64DC9BA80, index size: 4000, lines read: 2000
+We need to reallocate memory for index: 000001E64DC9BA80, index size: 4000, lines read: 4000
+We reallocate memory for index:         000001E64DCAB490, index size: 8000, lines read: 4000
+File completely read, number of strings read: 7202, first string: <      CANTO THE FIRST>, len: 21, last string: <   End of Canto The Eighth>, len: 25
 All sorting is completed and printed in file
 ```
-
-Вывод в файл:
-
-```text
-Printing array with 14 lines:
-1 pointer: 000001B9F3023663, len: 31 <A dying man with art to soothe,>
-2 pointer: 000001B9F30235A5, len: 32 <And nothing more important sees;>
-3 pointer: 000001B9F30236A9, len: 36 <And physic bring with mournful face,>
-4 pointer: 000001B9F30235C7, len: 23 <A paragon of virtue he!>
-5 pointer: 000001B9F3023684, len: 35 <Beneath his head the pillow smooth,>
-6 pointer: 000001B9F30235E0, len: 31 <But what a nuisance it will be,>
-7 pointer: 000001B9F3023601, len: 36 <Chained to his bedside night and day>
-8 pointer: 000001B9F3023580, len: 35 <He hath acquired the world's esteem>
-9 pointer: 000001B9F3023561, len: 29 <If seriously he hath disease;>
-10 pointer: 000001B9F3023540, len: 31 <My uncle's goodness is extreme,>
-11 pointer: 000001B9F30236CF, len: 27 <To sigh and meditate alone:>
-12 pointer: 000001B9F30236EC, len: 30 <When will the devil take his ow>
-13 pointer: 000001B9F3023627, len: 30 <Without a chance to slip away.>
-14 pointer: 000001B9F3023647, len: 26 <Ye need dissimulation base>
-
-
-
-########################################################################################################################
-
-
-
-Printing array with 14 lines:
-1 pointer: 000001B9F30235E0, len: 31 <But what a nuisance it will be,>
-2 pointer: 000001B9F30236A9, len: 36 <And physic bring with mournful face,>
-3 pointer: 000001B9F30235C7, len: 23 <A paragon of virtue he!>
-4 pointer: 000001B9F3023663, len: 31 <A dying man with art to soothe,>
-5 pointer: 000001B9F3023540, len: 31 <My uncle's goodness is extreme,>
-6 pointer: 000001B9F30236CF, len: 27 <To sigh and meditate alone:>
-7 pointer: 000001B9F3023647, len: 26 <Ye need dissimulation base>
-8 pointer: 000001B9F3023561, len: 29 <If seriously he hath disease;>
-9 pointer: 000001B9F3023684, len: 35 <Beneath his head the pillow smooth,>
-10 pointer: 000001B9F3023580, len: 35 <He hath acquired the world's esteem>
-11 pointer: 000001B9F30236EC, len: 30 <When will the devil take his ow>
-12 pointer: 000001B9F30235A5, len: 32 <And nothing more important sees;>
-13 pointer: 000001B9F3023601, len: 36 <Chained to his bedside night and day>
-14 pointer: 000001B9F3023627, len: 30 <Without a chance to slip away.>
-
-
-
-########################################################################################################################
-
-
-
-1 pointer: 000001B9F3023540 <My uncle's goodness is extreme,>
-2 pointer: 000001B9F3023561 <If seriously he hath disease;>
-3 pointer: 000001B9F3023580 <He hath acquired the world's esteem>
-4 pointer: 000001B9F30235A5 <And nothing more important sees;>
-5 pointer: 000001B9F30235C7 <A paragon of virtue he!>
-6 pointer: 000001B9F30235E0 <But what a nuisance it will be,>
-7 pointer: 000001B9F3023601 <Chained to his bedside night and day>
-8 pointer: 000001B9F3023627 <Without a chance to slip away.>
-9 pointer: 000001B9F3023647 <Ye need dissimulation base>
-10 pointer: 000001B9F3023663 <A dying man with art to soothe,>
-11 pointer: 000001B9F3023684 <Beneath his head the pillow smooth,>
-12 pointer: 000001B9F30236A9 <And physic bring with mournful face,>
-13 pointer: 000001B9F30236CF <To sigh and meditate alone:>
-14 pointer: 000001B9F30236EC <When will the devil take his ow>
-```
-
+> В консоль выводиться информация о динамическом расширении массива структур `smartString`, хранящей указатели на первые символы строк и их длину. Шестнадцатиричное число в каждой строке - указатель на начало index
+> 
 ## Структура проекта
 
 Проект небольшой, поэтому весь код находится в одном файле `Onegin.cpp`.
@@ -146,11 +86,12 @@ Printing array with 14 lines:
 
 ## Чему я научился
 
-- Понял принцип работы быстрой сортировки, написав свою версию.
-- Научился использовать указатель на функцию на примере компаратора, передаваемого в функцию сортировки.
-- Глубже погрузился в адресную арифметику и преобразование типов, пока писал универсальную сортировку для массива данных любого типа и компараторы для строк.
-- Изучил работу `realloc()` на примере динамически расширяющегося массива `index` — данные об этом как раз выводятся в консоль.
-- Узнал об `errno`, `strerror()` и применил в обёртках для `calloc()`, `realloc()`, `fopen()`.
+- Понял принцип работы быстрой сортировки, написав свою версию
+- Научился использовать указатель на функцию на примере компаратора, передаваемого в функцию сортировки
+- Глубже погрузился в адресную арифметику и преобразование типов, пока писал универсальную сортировку для массива данных любого типа и компараторы
+- Изучил работу `realloc()` на примере динамически расширяющегося массива `index` — данные об этом как раз выводятся в консоль
+- Узнал об `errno`, `strerror()` и применил в обёртках для `calloc()`, `realloc()`, `fopen()`
+- Узнал о функции getopt(), позволяющей удобно обрабатывать аргументы командной строки
 
 ## Интересные моменты и внедрённые фичи
 
@@ -159,3 +100,4 @@ Printing array with 14 lines:
 - **Сортировка строк справа налево оптимизирована** с помощью структуры `smartString`, хранящей длину каждой строки. Компаратору не нужно проходить по каждой строке при каждом сравнении через `strnlen()` — её длина уже известна. Более того, лишний проход по строке выполняется не 1, а 0 раз: длина строки считается с помощью дополнительного счётчика во время разбиения текста на строки, лишних проходов по тексту не происходит.
 - **`assert` в компараторах** для отладки проверяют не только то, что переданный им указатель на элемент массива не нулевой (указатель на структуру), но и то, что в этой структуре указатель на строку не нулевой (сравниваемые элементы корректны).
 - **Программа потребляет минимум памяти**: один массив под сам текст и один массив `index`, который сортируется. За счёт того, что мы сортируем именно `index`, а не сам текст (не перемещаем длинные строки), мы получаем гарантию безопасности (оригинальный текст не трогается) и возможность всегда обратиться к оригиналу — что и делаем в конце: `printText()` выводит оригинальный текст, не нуждаясь в начальном `index`.
+- **Аргументы командной строки**: пользователь сам решает, какой файл сортировать и куда записывать результат
