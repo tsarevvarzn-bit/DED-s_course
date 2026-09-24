@@ -1,3 +1,5 @@
+void         processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
+
 smartString* getStringsFromFile(  const char* const file_name, unsigned int* const num_of_lines_read_p);
 
 size_t       getSizeOfFile(       FILE* file);
@@ -6,6 +8,39 @@ void         printArray(          FILE* out, const smartString* const index, con
 void         printText(           FILE* out, const char* const text, const unsigned int number_of_lines);
 void         printSeparator(      FILE* out);
 
+
+
+void         processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p){
+
+    assert(argv);
+    assert(name_from_p);
+    assert(name_to_p);
+
+    int opt = 0;
+    while ((opt = getopt(argc, argv, "f:t:h")) != -1)
+    {
+        switch (opt)
+        {
+            case 'f':
+                *name_from_p = optarg;
+                break;
+
+            case 't':
+                *name_to_p = optarg;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    if(*name_from_p == NULL || *name_to_p == NULL){
+
+        printf(RED "ERROR: please, enter correct CMD arguments: -f name_of_input_file.txt -t name_of_output_file.txt\n" DEFAULT);
+        exit(EXIT_FAILURE);
+    }
+
+}
 
 smartString* getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p){
 

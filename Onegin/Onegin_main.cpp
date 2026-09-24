@@ -5,12 +5,16 @@
 #include "Comparators.cpp"
 
 
-int main(){
+int main(const int argc, char* const * argv){
+
+    char* in_file_name = NULL;
+    char* out_file_name = NULL;
+    processCMDArguments(argc, argv, &in_file_name, &out_file_name);
 
     unsigned int number_of_lines = 0;
-    smartString* index = getStringsFromFile("Onegin_text.txt", &number_of_lines);
+    smartString* index = getStringsFromFile(in_file_name, &number_of_lines);
     char*  text = index[0].str;
-    FILE*  out = safeOpen("Onegin_sorted.txt", "w");
+    FILE*  out = safeOpen(out_file_name, "w");
 
     qsort((void*) index, (size_t) number_of_lines, sizeof(smartString), compareAlphabetLeft);
     printArray(out, index, number_of_lines);

@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define DEFAULT "\033[0m"
 #define BOLD    "\033[1m"
