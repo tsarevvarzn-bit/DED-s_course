@@ -18,9 +18,16 @@
 #define CYAN    "\033[1;36m"
 
 const unsigned int MIN_INDEX_SIZE = 1000;
-const unsigned int MAX_STR_LEN = 10000;
+const unsigned int MAX_STR_LEN = 10000;//норм
 
 struct smartString {
     char*        str;
     unsigned int len;
+};
+
+struct textData {
+    smartString* index;
+    char*        text;
+    unsigned int num_of_lines;
+    unsigned int num_of_characters;
 };

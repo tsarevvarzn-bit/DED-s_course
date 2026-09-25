@@ -1,12 +1,12 @@
 void         processCMDArguments(const int argc, char* const * argv, char** const name_from_p, char** const name_to_p);
+textData     getStringsFromFile( const char* const file_name);
+void         splitTextOnStrings( textData* text_data_p);
 
-smartString* getStringsFromFile(  const char* const file_name, unsigned int* const num_of_lines_read_p);
+size_t       getSizeOfFile(      FILE* file);
 
-size_t       getSizeOfFile(       FILE* file);
-
-void         printArray(          FILE* out, const smartString* const index, const unsigned int num_of_lines);
-void         printText(           FILE* out, const char* const text, const unsigned int number_of_lines);
-void         printSeparator(      FILE* out);
+void         printArray(         FILE* out, textData text_data);
+void         printText(          FILE* out, textData text_data);
+void         printSeparator(     FILE* out);
 
 
 
@@ -16,10 +16,11 @@ void         processCMDArguments(const int argc, char* const * argv, char** cons
     assert(name_from_p);
     assert(name_to_p);
 
-    int opt = 0;
-    while ((opt = getopt(argc, argv, "f:t:h")) != -1)
+    int getopt_out = 0;
+
+    while ((getopt_out = getopt(argc, argv, "f:t:")) != -1)
     {
-        switch (opt)
+        switch (getopt_out)
         {
             case 'f':
                 *name_from_p = optarg;
@@ -42,63 +43,32 @@ void         processCMDArguments(const int argc, char* const * argv, char** cons
 
 }
 
-smartString* getStringsFromFile(const char* const file_name, unsigned int* const num_of_lines_read_p){
+textData getStringsFromFile(const char* const file_name){
 
     assert(file_name);
-    assert(num_of_lines_read_p);
 
+    textData text_data = {};
 
     FILE* file = safeOpen(file_name, "rb");
-    unsigned int num_of_characters_read = (unsigned int) getSizeOfFile(file);
+    text_data.num_of_characters = (unsigned int) getSizeOfFile(file);
 
-    char* text = (char*) safeCalloc(num_of_characters_read, sizeof(char));
-    fread((void*) text, sizeof(char), num_of_characters_read, file);
+    text_data.text = (char*) safeCalloc(text_data.num_of_characters, sizeof(char));
+    fread((void*) text_data.text, sizeof(char), text_data.num_of_characters, file);
 
-    smartString* index = (smartString*) safeCalloc(MIN_INDEX_SIZE, sizeof(smartString));
-    index[0].str = text;
-    *num_of_lines_read_p = 1;
+    text_data.index = (smartString*) safeCalloc(MIN_INDEX_SIZE, sizeof(smartString));
 
-    unsigned int index_size = MIN_INDEX_SIZE;
-    unsigned int index_of_first_ch_in_str = 0;
-
-    for(unsigned int i = 0; i < num_of_characters_read - 1; i++){
-
-        if((*num_of_lines_read_p) >= index_size){
-
-            printf("We need to reallocate memory for index: " YELLOW "%p" DEFAULT ", index size: %u, lines read: %u\n",
-            index, index_size, *num_of_lines_read_p);
-
-            index_size *= 2;
-            index = (smartString*) safeRealloc(index, index_size * sizeof(smartString));
-
-            printf("We reallocate memory for index:         " GREEN "%p" DEFAULT ", index size: %u, lines read: %u\n",
-            index, index_size, *num_of_lines_read_p);
-        }
-
-        if(text[i] == '\n'){
-
-            text[i - 1] = '\0'; //Перед ним стоит \r
-            text[i] = '\0';
-
-            index[*num_of_lines_read_p].str = text + i + 1;
-            index[*num_of_lines_read_p - 1].len = i - index_of_first_ch_in_str - 1;
-
-            index_of_first_ch_in_str = i + 1;
-
-            (*num_of_lines_read_p)++;
-        }
-    }
-
-    text[num_of_characters_read - 2] = '\0';
-    text[num_of_characters_read - 1] = '\0';
-    index[*num_of_lines_read_p - 1].len = num_of_characters_read - index_of_first_ch_in_str - 3;
+    splitTextOnStrings(&text_data);
 
     printf("File completely read, number of strings read: %u, first string: <%s>, len: %u, last string: <%s>, len: %u\n",
-    *num_of_lines_read_p, index[0].str, index[0].len, index[*num_of_lines_read_p - 1].str, index[*num_of_lines_read_p - 1].len);
+    text_data.num_of_lines,
+    text_data.index[0].str,
+    text_data.index[0].len,
+    text_data.index[text_data.num_of_lines - 1].str,
+    text_data.index[text_data.num_of_lines - 1].len);
 
     fclose(file);
 
-    return index;
+    return text_data;
 }
 
 size_t getSizeOfFile(FILE* file){
@@ -114,38 +84,39 @@ size_t getSizeOfFile(FILE* file){
     return file_stats.st_size;
 }
 
-void   printArray(FILE* out, const smartString* const index, const unsigned int num_of_lines){
+void   printArray(FILE* out, textData text_data){
 
-    assert(index);
+    assert(out);
+    assert(text_data.index);
 
-    fprintf(out, "Printing array with %u lines:\n", num_of_lines);
+    fprintf(out, "Printing array with %u lines:\n", text_data.num_of_lines);
 
-    for(unsigned int i = 0; i < num_of_lines; i++){
+    for(unsigned int i = 0; i < text_data.num_of_lines; i++){
 
-        assert(index[i].str);
+        assert(text_data.index[i].str);
 
-        fprintf(out, "%u pointer: %p, len: %u <%s>\n", i + 1, index[i].str, index[i].len, index[i].str);
+        fprintf(out, "%u pointer: %p, len: %u <%s>\n", i + 1, text_data.index[i].str, text_data.index[i].len, text_data.index[i].str);
     }
 }
 
-void   printText(FILE* out, const char* const text, const unsigned int number_of_lines){
+void   printText(FILE* out, textData text_data){
 
     assert(out);
-    assert(text);
+    assert(text_data.text);
 
     unsigned int i = 0;
     unsigned int number_of_printed_lines = 1;
 
-    fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text, text);
+    fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text_data.text, text_data.text);
 
-    while(number_of_printed_lines < number_of_lines){
+    while(number_of_printed_lines < text_data.num_of_lines){
 
-        if(text[i] == '\0'){
+        if(text_data.text[i] == '\0'){
 
             i += 2;
 
             number_of_printed_lines++;
-            fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text + i, text + i);
+            fprintf(out, "%u pointer: %p <%s>\n", number_of_printed_lines, text_data.text + i, text_data.text + i);
 
         }else{
 
@@ -159,3 +130,49 @@ void printSeparator(FILE* out){
     assert(out);
     fprintf(out, "\n\n\n########################################################################################################################\n\n\n\n");
 }
+
+void splitTextOnStrings(textData* text_data_p){
+
+    assert(text_data_p->index);
+    assert(text_data_p->text);
+
+    text_data_p->index[0].str = text_data_p->text;
+    text_data_p->num_of_lines = 1;
+
+    unsigned int index_size = MIN_INDEX_SIZE;
+    unsigned int index_of_first_ch_in_str = 0;
+
+    for(unsigned int i = 0; i < text_data_p->num_of_characters - 1; i++){
+
+        if((text_data_p->num_of_lines) >= index_size){
+
+            printf("We need to reallocate memory for index: " YELLOW "%p" DEFAULT ", index size: %u, lines read: %u\n",
+            text_data_p->index, index_size, text_data_p->num_of_lines);
+
+            index_size *= 2;
+            text_data_p->index = (smartString*) safeRealloc(text_data_p->index, index_size * sizeof(smartString));
+
+            printf("We reallocate memory for index:         " GREEN "%p" DEFAULT ", index size: %u, lines read: %u\n",
+            text_data_p->index, index_size, text_data_p->num_of_lines);
+        }
+
+        if(text_data_p->text[i] == '\n'){
+
+            text_data_p->text[i - 1] = '\0'; //Перед ним стоит \r
+            text_data_p->text[i] = '\0';
+
+            text_data_p->index[text_data_p->num_of_lines].str = text_data_p->text + i + 1;
+            text_data_p->index[text_data_p->num_of_lines - 1].len = i - index_of_first_ch_in_str - 1;
+
+            index_of_first_ch_in_str = i + 1;
+
+            (text_data_p->num_of_lines)++;
+        }
+    }
+
+    text_data_p->text[text_data_p->num_of_characters - 2] = '\0';
+    text_data_p->text[text_data_p->num_of_characters - 1] = '\0';
+    text_data_p->index[text_data_p->num_of_lines - 1].len = text_data_p->num_of_characters - index_of_first_ch_in_str - 3;
+
+}
+

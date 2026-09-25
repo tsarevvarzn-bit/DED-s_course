@@ -1,6 +1,8 @@
-void* safeCalloc(          const size_t number_of_elements, const size_t size_of_element);
-void* safeRealloc(         void* const old_pointer, const size_t new_size);
-FILE* safeOpen(            const char* file_name, const char* mode);
+void* safeCalloc( const size_t number_of_elements, const size_t size_of_element);
+void* safeRealloc(void* const old_pointer, const size_t new_size);
+FILE* safeOpen(   const char* file_name, const char* mode);
+
+void freeTextData(textData text_data);
 
 
 
@@ -49,4 +51,13 @@ FILE*  safeOpen(const char* const file_name, const char* const mode){
     }
 
     return file_p;
+}
+
+void freeTextData(textData text_data){
+
+    assert(text_data.index);
+    assert(text_data.text);
+
+    free(text_data.index);
+    free(text_data.text);
 }

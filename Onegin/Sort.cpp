@@ -8,9 +8,10 @@ void trivialSort(void* const        array_void,
                  const unsigned int size_of_elem,
                  int (*             compare)(const void* a, const void* b));
 
-void swap       (char* const a, char* const b, const unsigned int size_of_elem);
+void swap       (char* const a, char* const b, const unsigned int size_of_elem);//Sort.h
 
-
+//К каждому файлу - свой хэдер с прототипами функций, находящимися в этом файле
+//В каждый файл инклюдим хэдер тех файлов, функции из которых мы используем
 
 void myQSort(    void* const        array_void,
                  const unsigned int number_of_elements,

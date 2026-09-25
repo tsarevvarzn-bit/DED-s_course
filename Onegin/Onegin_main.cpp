@@ -10,24 +10,20 @@ int main(const int argc, char* const * argv){
     char* in_file_name = NULL;
     char* out_file_name = NULL;
     processCMDArguments(argc, argv, &in_file_name, &out_file_name);
-
-    unsigned int number_of_lines = 0;
-    smartString* index = getStringsFromFile(in_file_name, &number_of_lines);
-    char*  text = index[0].str;
+    textData text_data = getStringsFromFile(in_file_name);
     FILE*  out = safeOpen(out_file_name, "w");
 
-    qsort((void*) index, (size_t) number_of_lines, sizeof(smartString), compareAlphabetLeft);
-    printArray(out, index, number_of_lines);
+    qsort((void*) text_data.index, (size_t) text_data.num_of_lines, sizeof(smartString), compareAlphabetLeft);
+    printArray(out, text_data);
     printSeparator(out);
 
-    myQSort((void*) index, number_of_lines, sizeof(smartString), compareAlphabetRight);
-    printArray(out, index, number_of_lines);
+    myQSort((void*) text_data.index, text_data.num_of_lines, sizeof(smartString), compareAlphabetRight);
+    printArray(out, text_data);
     printSeparator(out);
 
-    printText(out, text, number_of_lines);
+    printText(out, text_data);
+
     printf("All sorting is completed and printed in file\n");
-
-    free(text);
-    free(index);
+    freeTextData(text_data);
     fclose(out);
 }
